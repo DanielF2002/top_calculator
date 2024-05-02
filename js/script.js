@@ -8,6 +8,11 @@ const isDebug = true;
  */
 let buffer = [0];
 
+/**
+ * Dos the number already includes a dot?
+ */
+let hasDot = false;
+
 // Belows are handlers of key pressed.
 /**
  * Clear the buffer and currValue, then update the screen.
@@ -38,8 +43,15 @@ const addOp = (e) => {
 const equleOp = (e) => {
     dbg(e);
 };
+/**
+ * Set hasDot to true.
+ */
 const dotOp = (e) => {
     dbg(e);
+    if (hasDot) {
+        return;
+    }
+    hasDot = true;
 };
 const numberOp = (e) => {
     dbg(e);
@@ -86,7 +98,7 @@ const keyDic = {
  * Create the UI of calculator.
  */
 const createCalculator = () => {
-    let frame = document.querySelector(".frame");
+    const frame = document.querySelector(".frame");
     frame.appendChild(screen()); // create the LCD screen.
     // create the keys by rows.
     frame.appendChild(
@@ -112,9 +124,9 @@ const createCalculator = () => {
  * @returns {HTMLElement} The HTML of screen.
  */
 const screen = () => {
-    let row = document.createElement("div");
+    const row = document.createElement("div");
     row.classList.add("row");
-    let screen = document.createElement("div");
+    const screen = document.createElement("div");
     screen.classList.add("screen");
     row.appendChild(screen);
     return row;
@@ -126,7 +138,7 @@ const screen = () => {
  * @returns {HTMLElement} The HTML of a row of keys.
  */
 const row = (...children) => {
-    let dom = document.createElement("div");
+    const dom = document.createElement("div");
     dom.classList.add("row");
     children.forEach(child => dom.appendChild(key(child)));
     return dom;
@@ -138,7 +150,7 @@ const row = (...children) => {
  * @returns {HTMLElement} The HTML of a key.
  */
 const key = (sKey) => {
-    let dom = document.createElement("div");
+    const dom = document.createElement("div");
     dom.id = sKey;
     dom.textContent = keyDic[sKey].displayName;
     dom.classList.add("button");
@@ -151,7 +163,7 @@ const key = (sKey) => {
  * Update the screen by the lasest value in buffer.
  */
 const updateScreen = () => {
-    let screen = document.querySelector(".screen");
+    const screen = document.querySelector(".screen");
     screen.textContent = buffer[buffer.length - 1];
 }
 
