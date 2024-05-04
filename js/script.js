@@ -77,7 +77,7 @@ const numberOp = (e) => {
  */
 const operatorOp = (e) => {
     if (unComputedExpression.length >= 2) {
-        equleOpExcuter();
+        equleOpExcutor();
     }
     let value = parseCurrValue();
     unComputedExpression.push(value);
