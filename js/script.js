@@ -1,70 +1,157 @@
 /**
- * If in debug mode.
+ * The current value that displayed on the screen.
  */
-const isDebug = true;
+let currValue = "0";
 
 /**
- * The buffer of uncomputed expression.
+ * The flag is used to track whether the current value is a cached value.
+ * When a user inputs a number followed by an operator, the entered number is also displayed.
+ * When the user inputs another operator or equals sign, the displayed number will be used for computation.
+ * If the user inputs another number after an operator, the previous number will be erased.
  */
-let buffer = [0];
+let isCurrValueCache = false;
 
 /**
- * Dos the number already includes a dot?
+ * The cached uncomputed expression.
  */
-let hasDot = false;
+let unComputedExpression = [];
 
 // Belows are handlers of key pressed.
 /**
- * Clear the buffer and currValue, then update the screen.
+ * Key AC Pressed.
  */
 const acOp = (e) => {
-    dbg(e);
-    buffer = [0];
+    isCurrValueCache = false;
+    currValue = "0";
+    unComputedExpression = [];
     updateScreen();
 };
-const npOp = (e) => {
-    dbg(e);
-};
-const percentageOp = (e) => {
-    dbg(e);
-};
-const divideOp = (e) => {
-    dbg(e);
-};
-const mutiplyOp = (e) => {
-    dbg(e);
-};
-const substractOp = (e) => {
-    dbg(e);
-};
-const addOp = (e) => {
-    dbg(e);
-};
-const equleOp = (e) => {
-    dbg(e);
-};
 /**
- * Set hasDot to true.
+ * Key +/- Pressed.
  */
-const dotOp = (e) => {
-    dbg(e);
-    if (hasDot) {
+const npOp = (e) => {
+    isCurrValueCache = false;
+    if (currValue === "0") {
         return;
     }
-    hasDot = true;
+    if (currValue[0] === "-") {
+        currValue = currValue.slice(1);
+    } else {
+        currValue = "-" + currValue;;
+    }
+    updateScreen();
 };
+/**
+ * Key % Pressed.
+ */
+const percentageOp = (e) => {
+    isCurrValueCache = false;
+    let value = parseCurrValue() / 100;
+    currValue = value.toString();
+    updateScreen();
+};
+/**
+ * Key . Pressed.
+ */
+const dotOp = (e) => {
+    if (currValue.includes(".") || currValue.length >= 9) { // Ignore when there is a dot or data is too long.
+        return;
+    }
+    currValue = currValue + ".";
+};
+//Key 0-9 Pressed.
 const numberOp = (e) => {
-    dbg(e);
+    if (currValue.length >= 9) { // Ignore input to avoid overflow.
+        return;
+    }
+    if (currValue === "0" || isCurrValueCache) {
+        currValue = e.target.textContent;
+    } else {
+        currValue = currValue + e.target.textContent;
+    }
+    isCurrValueCache = false;
+    updateScreen();
+};
+/**
+ * Key / * + - Pressed.
+ */
+const operatorOp = (e) => {
+    if (unComputedExpression.length >= 2) {
+        equleOpExcuter();
+    }
+    let value = parseCurrValue();
+    unComputedExpression.push(value);
+    unComputedExpression.push(e.target.textContent);
+    isCurrValueCache = true;
+};
+/**
+ * Key = Pressed.
+ */
+const equleOp = (e) => {
+    equleOpExcutor();
 };
 
 /**
- * Do things in debug mode.
- * @param {Event} e DOM event.
+ * Excute the expression.
  */
-const dbg = (e) => {
-    if (isDebug) {
-        console.log(e.target.textContent);
+const equleOpExcutor = () => {
+    isCurrValueCache = false;
+    let value = parseCurrValue();
+    unComputedExpression.push(value);
+    executeExpression();
+    updateScreen();
+}
+
+/**
+ * Parse the value from currValue.
+ * @returns The int or float value.
+ */
+const parseCurrValue = () => {
+    if (currValue.includes(".") && currValue.charAt(currValue.length - 1) !== ".") {
+        return parseFloat(currValue);
     }
+    return parseInt(currValue);
+}
+
+/**
+ * Compute the cached expression.
+ */
+const executeExpression = () => {
+    if (unComputedExpression.length !== 3) {
+        console.log("equle error.");
+    }
+    let res = 0;
+    switch(unComputedExpression[1]) {
+        case "+":
+            res = unComputedExpression[0] + unComputedExpression[2];
+            break;
+        case "-":
+            res = unComputedExpression[0] - unComputedExpression[2];
+            break;
+        case "*":
+            res = unComputedExpression[0] * unComputedExpression[2];
+            break;
+        case "/":
+            if (unComputedExpression[2] === 0) {
+                res = "ERROR";
+            } else {
+                res = unComputedExpression[0] / unComputedExpression[2]; 
+            }
+            break;
+        default:
+            console.log("equle error.");
+    }
+    currValue = res.toString();
+    unComputedExpression = [];
+}
+
+/**
+ * Push the currValue to unComputedExpression.
+ */
+const pushNumberToExpression = () => {
+    let value = parseCurrValue();
+    unComputedExpression.push(value);
+    isCurrValueCache = true;
 }
 
 /**
@@ -73,13 +160,13 @@ const dbg = (e) => {
  * Properties: { displayname, category, handler }
  */
 const keyDic = {
-    c: {displayName: "C", category: "special", handler: acOp},
+    c: {displayName: "AC", category: "special", handler: acOp},
     np: {displayName: "+/-", category: "special", handler: npOp},
     percentage: {displayName: "%", category: "special", handler: percentageOp},
-    divide: {displayName: "/", category: "operator", handler: divideOp},
-    mutiply: {displayName: "*", category: "operator", handler: mutiplyOp},
-    substract: {displayName: "-", category: "operator", handler: substractOp},
-    add: {displayName: "+", category: "operator", handler: addOp},
+    divide: {displayName: "/", category: "operator", handler: operatorOp},
+    multiply: {displayName: "*", category: "operator", handler: operatorOp},
+    substract: {displayName: "-", category: "operator", handler: operatorOp},
+    add: {displayName: "+", category: "operator", handler: operatorOp},
     equle: {displayName: "=", category: "operator", handler: equleOp},
     dot: {displayName: ".", category: "number", handler: dotOp},
     one: {displayName: "1", category: "number", handler: numberOp},
@@ -105,7 +192,7 @@ const createCalculator = () => {
         row("c", "np", "percentage", "divide")
     );
     frame.appendChild(
-        row("seven", "eight", "nine", "mutiply")
+        row("seven", "eight", "nine", "multiply")
     );
     frame.appendChild(
         row("four", "five", "six", "substract")
@@ -163,8 +250,12 @@ const key = (sKey) => {
  * Update the screen by the lasest value in buffer.
  */
 const updateScreen = () => {
+    if (currValue.length > 9 && currValue.includes(".") && currValue.charAt(currValue.length - 1) !== ".") {
+        let length = currValue.split(".")[0].length + 1;
+        currValue = parseFloat(currValue).toFixed(9 - length);
+    }
     const screen = document.querySelector(".screen");
-    screen.textContent = buffer[buffer.length - 1];
+    screen.textContent = currValue;
 }
 
 createCalculator();
